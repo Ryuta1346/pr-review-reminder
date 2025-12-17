@@ -19,9 +19,11 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Send reminders
+      - name: Load configuration and send reminders
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           DRY_RUN: ${{ secrets.DRY_RUN }}
+          LABEL_CHANNEL_MAP_JSON: ${{ vars.LABEL_CHANNEL_MAP_JSON }}
+          SLACK_USER_MAP_JSON: ${{ vars.SLACK_USER_MAP_JSON }}
         run: node .github/scripts/pr-review-reminder-by-label.mjs

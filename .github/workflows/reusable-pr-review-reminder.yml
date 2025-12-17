@@ -1,0 +1,51 @@
+name: PR Review Reminder (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      label_channel_map:
+        description: "JSON: ラベル→Slackチャンネルのマッピング"
+        required: true
+        type: string
+      slack_user_map:
+        description: "JSON: GitHubユーザー→Slack IDのマッピング（省略可）"
+        required: false
+        type: string
+        default: "{}"
+      dry_run:
+        description: "trueの場合、Slackに投稿せずログ出力のみ"
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      SLACK_BOT_TOKEN:
+        description: "Slack Bot OAuth Token (xoxb-...)"
+        required: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout pr-review-reminder
+        uses: actions/checkout@v4
+        with:
+          repository: ryuta/pr-review-reminder
+          path: _pr-review-reminder
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Send reminders
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          DRY_RUN: ${{ inputs.dry_run && '1' || '' }}
+          LABEL_CHANNEL_MAP_JSON: ${{ inputs.label_channel_map }}
+          SLACK_USER_MAP_JSON: ${{ inputs.slack_user_map }}
+        run: node _pr-review-reminder/.github/scripts/pr-review-reminder-by-label.mjs

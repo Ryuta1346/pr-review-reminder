@@ -1,10 +1,4 @@
-import fs from "node:fs";
-import path from "node:path";
 import process from "node:process";
-import { fileURLToPath } from "node:url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const GH_TOKEN = process.env.GITHUB_TOKEN;
 const SLACK_BOT_TOKEN = process.env.SLACK_BOT_TOKEN;
@@ -17,17 +11,12 @@ const repoFull = process.env.GITHUB_REPOSITORY; // "owner/repo"
 if (!repoFull) throw new Error("GITHUB_REPOSITORY is missing");
 const [owner, repo] = repoFull.split("/");
 
-// optional: github login -> slack user id map
-const slackUserMapPath = path.join(__dirname, "..", "slack-user-map.json");
-let slackUserMap = {};
-if (fs.existsSync(slackUserMapPath)) {
-  slackUserMap = JSON.parse(fs.readFileSync(slackUserMapPath, "utf8"));
+// Configuration from environment variables
+if (!process.env.LABEL_CHANNEL_MAP_JSON) {
+  throw new Error("LABEL_CHANNEL_MAP_JSON environment variable is required");
 }
-
-// required: label -> channel map
-const labelMapPath = path.join(__dirname, "..", "pr-label-channel-map.json");
-if (!fs.existsSync(labelMapPath)) throw new Error("Missing .github/pr-label-channel-map.json");
-const labelMap = JSON.parse(fs.readFileSync(labelMapPath, "utf8"));
+const labelMap = JSON.parse(process.env.LABEL_CHANNEL_MAP_JSON);
+const slackUserMap = JSON.parse(process.env.SLACK_USER_MAP_JSON || "{}");
 
 function toSlackMention(githubLogin) {
   const uid = slackUserMap[githubLogin];

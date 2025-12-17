@@ -1,8 +1,0 @@
-{
-  "default_channel_id": "",
-  "rules": [
-    { "labels_any": [], "channel_id": "" },
-    { "labels_any": [], "channel_id": "" },
-    { "labels_any": [], "channel_id": "" }
-  ]
-}
