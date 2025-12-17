@@ -1,8 +1,8 @@
 {
-  "default_channel_id": "C04GFSZ7N4T",
+  "default_channel_id": "",
   "rules": [
-    { "labels_any": ["frontend", "ui"], "channel_id": "C04GJ8QKSP6" },
-    { "labels_any": ["backend", "api"], "channel_id": "C04GUK6EAFK" },
-    { "labels_any": ["infra", "terraform"], "channel_id": "C04H5NLBATS" }
+    { "labels_any": [], "channel_id": "" },
+    { "labels_any": [], "channel_id": "" },
+    { "labels_any": [], "channel_id": "" }
   ]
 }
