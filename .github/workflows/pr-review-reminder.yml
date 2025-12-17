@@ -1,0 +1,27 @@
+name: PR review reminder (by label -> Slack channel)
+
+on:
+  schedule:
+    # cronはUTC。例：JST 09:00/13:00/17:00/21:00 に実行したい場合（UTC 00/04/08/12）
+    - cron: "0 0,4,8,12 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Send reminders
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          DRY_RUN: ${{ secrets.DRY_RUN }}
+        run: node .github/scripts/pr-review-reminder-by-label.mjs
