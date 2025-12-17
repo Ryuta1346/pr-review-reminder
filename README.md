@@ -1,30 +1,30 @@
-# PR Review Reminder to Slack（label → channel）
+# PR Review Reminder to Slack (label → channel)
 
-GitHub Actions（schedule）で オープン中のPR を定期チェックし、PRの Requested
-reviewers（レビュワー） を対象に、PRラベルに応じて
-Slackの投稿チャンネルを分岐して通知します。
+[日本語版 README](README.ja.md)
 
-- **対象PR**: `state=open` のPRのみ
-- **対象者**: `requested_reviewers`（個人レビュワー）だけ
-- **チャンネル分岐**: PRラベル → SlackチャンネルID（ルール表で制御）
-- **実行基盤**: GitHub Actions（cron）
+A GitHub Actions reusable workflow that periodically checks open PRs and sends review reminders to Slack channels based on PR labels.
+
+- **Target PRs**: Only `state=open` PRs
+- **Target users**: Only `requested_reviewers` (individual reviewers)
+- **Channel routing**: PR labels → Slack channel IDs (configurable rules)
+- **Platform**: GitHub Actions (cron schedule)
 
 ---
 
-## 使用方法（Reusable Workflow）
+## Usage (Reusable Workflow)
 
-他のリポジトリから呼び出して使用します。
+Call this workflow from your repository.
 
-### 1) 呼び出し側リポジトリにワークフローを作成
+### 1) Create a workflow in your repository
 
-`.github/workflows/pr-review-reminder.yml` を作成：
+Create `.github/workflows/pr-review-reminder.yml`:
 
 ```yaml
 name: PR Review Reminder
 
 on:
   schedule:
-    # cronはUTC。例：JST 09:00/13:00/17:00/21:00 に実行したい場合（UTC 00/04/08/12）
+    # Cron is in UTC. For JST 09:00/13:00/17:00/21:00, use UTC 00:00/04:00/08:00/12:00
     - cron: "0 0,4,8,12 * * *"
   workflow_dispatch:
 
@@ -53,25 +53,25 @@ jobs:
 
 ### 2) Inputs
 
-| 名前 | 必須 | 説明 |
-|------|------|------|
-| `label_channel_map` | Yes | JSON: ラベル→Slackチャンネルのマッピング |
-| `slack_user_map` | No | JSON: GitHubユーザー→Slack IDのマッピング（デフォルト: `{}`） |
-| `dry_run` | No | `true`の場合、Slackに投稿せずログ出力のみ（デフォルト: `false`） |
+| Name | Required | Description |
+|------|----------|-------------|
+| `label_channel_map` | Yes | JSON: Label to Slack channel mapping |
+| `slack_user_map` | No | JSON: GitHub username to Slack user ID mapping (default: `{}`) |
+| `dry_run` | No | If `true`, only logs without posting to Slack (default: `false`) |
 
 ### 3) Secrets
 
-| 名前 | 必須 | 説明 |
-|------|------|------|
+| Name | Required | Description |
+|------|----------|-------------|
 | `SLACK_BOT_TOKEN` | Yes | Slack Bot OAuth Token (`xoxb-...`) |
 
 ---
 
-## 設定の詳細
+## Configuration Details
 
-### label_channel_map（必須）
+### label_channel_map (Required)
 
-PRラベルに応じてSlackチャンネルを振り分けるルールを定義します。
+Defines rules for routing PRs to Slack channels based on labels.
 
 ```json
 {
@@ -83,15 +83,15 @@ PRラベルに応じてSlackチャンネルを振り分けるルールを定義�
 }
 ```
 
-**挙動：**
+**Behavior:**
 
-- PRのラベルが `labels_any` のいずれか1つでも一致 → その `channel_id` に投稿
-- 複数ルールに一致 → 上から順で最初に一致したルールが勝ち
-- 一致なし → `default_channel_id` に投稿
+- If PR has ANY label matching `labels_any` → post to that `channel_id`
+- Multiple rule matches → first matching rule wins (order matters)
+- No matches → post to `default_channel_id`
 
-### slack_user_map（任意）
+### slack_user_map (Optional)
 
-GitHubユーザー名をSlackユーザーIDにマッピングします。
+Maps GitHub usernames to Slack user IDs for proper mentions.
 
 ```json
 {
@@ -100,99 +100,99 @@ GitHubユーザー名をSlackユーザーIDにマッピングします。
 }
 ```
 
-**挙動：**
+**Behavior:**
 
-- マップがあるレビュワー：`<@Uxxxx>` でメンション
-- マップがないレビュワー：`@github-login` の文字列（Slackメンションではない）
+- Mapped reviewers: `<@Uxxxx>` (proper Slack mention)
+- Unmapped reviewers: `@github-login` (plain text, not a mention)
 
 ---
 
-## Slack App のセットアップ
+## Slack App Setup
 
-### 1) Slack App を作成
+### 1) Create a Slack App
 
-1. [Slack Developer Portal](https://api.slack.com/apps) → **Create New App** → **From scratch**
-2. App名を入力（例：PR Review Reminder）
-3. インストール先のワークスペースを選択
+1. Go to [Slack Developer Portal](https://api.slack.com/apps) → **Create New App** → **From scratch**
+2. Enter app name (e.g., PR Review Reminder)
+3. Select the workspace to install
 
-### 2) Bot権限を付与
+### 2) Add Bot Permissions
 
-1. App設定 → **OAuth & Permissions**
-2. **Bot Token Scopes** に `chat:write` を追加
+1. App settings → **OAuth & Permissions**
+2. Add `chat:write` to **Bot Token Scopes**
 
-### 3) トークンを取得
+### 3) Get the Token
 
-1. **Install to Workspace** を実行
-2. **Bot User OAuth Token**（`xoxb-…`）を控える
+1. Click **Install to Workspace**
+2. Copy the **Bot User OAuth Token** (`xoxb-...`)
 
-### 4) Bot をチャンネルへ招待
+### 4) Invite Bot to Channels
 
-通知したい各チャンネルで：
+In each target channel:
 
 ```
 /invite @<Your Bot Name>
 ```
 
-### 5) チャンネルIDを取得
+### 5) Get Channel IDs
 
-ブラウザでSlackを開き、対象チャンネルのURLに含まれる `C...` を使用
+Open Slack in browser and get `C...` from the URL
 
-例：`.../client/TXXXXXXX/C12345678` → `C12345678`
+Example: `.../client/TXXXXXXX/C12345678` → `C12345678`
 
-### 6) GitHub Secrets を設定
+### 6) Configure GitHub Secrets
 
-呼び出し側リポジトリで：
+In your calling repository:
 
 1. **Settings** → **Secrets and variables** → **Actions**
-2. `SLACK_BOT_TOKEN` を追加
+2. Add `SLACK_BOT_TOKEN`
 
 ---
 
-## 投稿内容のイメージ
+## Message Format
 
-チャンネルごとに、レビュワー単位でPR一覧をまとめて投稿します。
+Posts a grouped list of PRs per reviewer in each channel.
 
 ```
-*PRレビュー依頼（open PR / requested reviewers）*  `owner/repo`
+*PR Review Request (open PR / requested reviewers)*  `owner/repo`
 
-*<@レビュワー>*
-• #123 PRタイトル (author: xxx) [label1, label2]
-• #456 別のPR (author: yyy) [label3]
+*<@reviewer>*
+• #123 PR Title (author: xxx) [label1, label2]
+• #456 Another PR (author: yyy) [label3]
 ```
 
 ---
 
-## よくあるトラブルシュート
+## Troubleshooting
 
-### Slackに投稿できない（not_in_channel / channel_not_found）
+### Cannot post to Slack (not_in_channel / channel_not_found)
 
-Botを対象チャンネルに招待してください：`/invite @Bot`
+Invite the bot to the target channel: `/invite @Bot`
 
-### 期待したチャンネルに出ない
+### PR not appearing in expected channel
 
-`label_channel_map` の以下を確認：
+Check `label_channel_map`:
 
-- ラベル名のスペル一致
-- ルール順（上から評価）
-- `default_channel_id`
+- Label names match exactly
+- Rule order (evaluated top to bottom)
+- `default_channel_id` setting
 
-### 通知が出ない
+### No notifications
 
-`requested_reviewers` が空のPRは対象外です
-
----
-
-## 制約・今後の拡張
-
-- **Team reviewer（requested_teams）は対象外**
-- **毎回同じ内容を投稿します**（重複抑止機能なし）
+PRs without `requested_reviewers` are not included
 
 ---
 
-## セキュリティ
+## Limitations
 
-- Slackトークンは必ず **GitHub Secrets** に保存
-- workflowは `schedule` / `workflow_dispatch` のみで動作（外部PRでSecretsが漏れにくい設計）
+- **Team reviewers (`requested_teams`) are not supported**
+- **Posts same content on each run** (no deduplication)
+
+---
+
+## Security
+
+- Always store Slack token in **GitHub Secrets**
+- Workflow only triggers on `schedule` / `workflow_dispatch` (secrets are not exposed to external PRs)
 
 ---
 
