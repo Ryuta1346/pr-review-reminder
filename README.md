@@ -1,6 +1,8 @@
 # PR Review Reminder to Slack（label → channel）
 
-GitHub Actions（schedule）で オープン中のPR を定期チェックし、PRの Requested reviewers（レビュワー） を対象に、PRラベルに応じて Slackの投稿チャンネルを分岐して通知します。
+GitHub Actions（schedule）で オープン中のPR を定期チェックし、PRの Requested
+reviewers（レビュワー） を対象に、PRラベルに応じて
+Slackの投稿チャンネルを分岐して通知します。
 
 - **対象PR**: `state=open` のPRのみ
 - **対象者**: `requested_reviewers`（個人レビュワー）だけ
@@ -43,7 +45,9 @@ GitHub Actions（schedule）で オープン中のPR を定期チェックし、
 2. **Bot Token Scopes** に以下を追加
    - `chat:write`（Slack投稿に必須）
 
-> チャンネルに参加させない運用をしたい場合は `chat:write.public` が必要になることがありますが、基本は Botをチャンネルに招待する運用を推奨します。
+> チャンネルに参加させない運用をしたい場合は `chat:write.public`
+> が必要になることがありますが、基本は
+> Botをチャンネルに招待する運用を推奨します。
 
 #### 1-3. ワークスペースにインストールしてトークン取得
 
@@ -62,8 +66,8 @@ GitHub Actions（schedule）で オープン中のPR を定期チェックし、
 /invite @<Your Bot Name>
 ```
 
-> Botがチャンネルにいないと `not_in_channel` や `channel_not_found` で失敗します。
-> プライベートチャンネルも同様に招待が必要です。
+> Botがチャンネルにいないと `not_in_channel` や `channel_not_found`
+> で失敗します。 プライベートチャンネルも同様に招待が必要です。
 
 ---
 
@@ -108,14 +112,14 @@ GitHub Actions（schedule）で オープン中のPR を定期チェックし、
 
 **追加するSecrets：**
 
-| Secret名 | 値 |
-|----------|-----|
+| Secret名          | 値                 |
+| ----------------- | ------------------ |
 | `SLACK_BOT_TOKEN` | Slackの `xoxb-...` |
 
 **任意：**
 
-| Secret名 | 値 |
-|----------|-----|
+| Secret名  | 値                                       |
+| --------- | ---------------------------------------- |
 | `DRY_RUN` | `1`（最初は投稿せずActionsログだけ出す） |
 
 ---
@@ -128,12 +132,12 @@ GitHub Actions（schedule）で オープン中のPR を定期チェックし、
 
 ```json
 {
-  "default_channel_id": "C012DEFAULT",
-  "rules": [
-    { "labels_any": ["frontend", "ui"], "channel_id": "C111FRONT" },
-    { "labels_any": ["backend", "api"], "channel_id": "C222BACK" },
-    { "labels_any": ["infra", "terraform"], "channel_id": "C333INFRA" }
-  ]
+	"default_channel_id": "C012DEFAULT",
+	"rules": [
+		{ "labels_any": ["frontend", "ui"], "channel_id": "C111FRONT" },
+		{ "labels_any": ["backend", "api"], "channel_id": "C222BACK" },
+		{ "labels_any": ["infra", "terraform"], "channel_id": "C333INFRA" }
+	]
 }
 ```
 
@@ -151,8 +155,8 @@ GitHub Actions（schedule）で オープン中のPR を定期チェックし、
 
 ```json
 {
-  "octocat": "U012ABCDEF",
-  "your-github-login": "U034GHIJKL"
+	"octocat": "U012ABCDEF",
+	"your-github-login": "U034GHIJKL"
 }
 ```
 
@@ -182,14 +186,15 @@ GitHub Actions（schedule）で オープン中のPR を定期チェックし、
 
 ```yaml
 on:
-  schedule:
-    - cron: "0 0,4,8,12 * * *"
+    schedule:
+        - cron: "0 0,4,8,12 * * *"
 ```
 
 **注意：**
 
 - cronは **UTC** です
-- JSTで 09:00/13:00/17:00/21:00 にしたい場合は、UTCで 00:00/04:00/08:00/12:00 に設定します
+- JSTで 09:00/13:00/17:00/21:00 にしたい場合は、UTCで 00:00/04:00/08:00/12:00
+  に設定します
 
 ---
 
@@ -220,7 +225,8 @@ Botを対象チャンネルに招待してください：`/invite @Bot`
 
 ### 通知が出ない
 
-`requested_reviewers` が空のPRは対象外です（レビュワー指定が無いPRは通知しません）
+`requested_reviewers`
+が空のPRは対象外です（レビュワー指定が無いPRは通知しません）
 
 ---
 
@@ -235,11 +241,13 @@ Botを対象チャンネルに招待してください：`/invite @Bot`
 
 ## セキュリティ
 
-- Slackトークンは必ず **GitHub Secrets** に保存し、リポジトリにコミットしないでください
-- workflowは `schedule` / `workflow_dispatch` のみで動かす想定（外部PRでSecretsが漏れにくい設計）
+- Slackトークンは必ず **GitHub Secrets**
+  に保存し、リポジトリにコミットしないでください
+- workflowは `schedule` / `workflow_dispatch`
+  のみで動かす想定（外部PRでSecretsが漏れにくい設計）
 
 ---
 
 ## License
 
-MIT / Apache-2.0 など任意のライセンスを設定してください。
+MIT
