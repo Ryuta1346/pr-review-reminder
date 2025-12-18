@@ -4,8 +4,9 @@
 
 A GitHub Actions reusable workflow that periodically checks open PRs and sends review reminders to Slack channels based on PR labels.
 
-- **Target PRs**: Only `state=open` PRs
+- **Target PRs**: Only `state=open` PRs (WIP/Draft PRs excluded)
 - **Target users**: Only `requested_reviewers` (individual reviewers)
+- **Unassigned PRs**: Notified to `default_channel_id`
 - **Channel routing**: PR labels → Slack channel IDs (configurable rules)
 - **Platform**: GitHub Actions (cron schedule)
 
@@ -88,6 +89,7 @@ Defines rules for routing PRs to Slack channels based on labels.
 - If PR has ANY label matching `labels_any` → post to that `channel_id`
 - Multiple rule matches → first matching rule wins (order matters)
 - No matches → post to `default_channel_id`
+- PRs without reviewers → post to `default_channel_id`
 
 ### slack_user_map (Optional)
 
@@ -160,6 +162,25 @@ Posts a grouped list of PRs per reviewer in each channel.
 • #456 Another PR (author: yyy) [label3]
 ```
 
+**PRs without reviewers (posted to default_channel_id):**
+
+```
+*PRs without reviewers*  `owner/repo`
+
+• #789 New feature (author: zzz) [feature]
+• #012 Bug fix (author: www)
+```
+
+---
+
+## WIP/Draft PR Exclusion
+
+The following PRs are automatically excluded from notifications:
+
+- **Draft PR**: PRs created using GitHub's Draft PR feature
+- **[WIP]**: PRs with `[WIP]` in the title (case-insensitive)
+- **WIP:**: PRs with title starting with `WIP:` (case-insensitive)
+
 ---
 
 ## Troubleshooting
@@ -178,13 +199,15 @@ Check `label_channel_map`:
 
 ### No notifications
 
-PRs without `requested_reviewers` are not included
+- WIP/Draft PRs are excluded
+- PRs without `requested_reviewers` are posted to `default_channel_id`
+- If `default_channel_id` is not set, PRs without reviewers are skipped
 
 ---
 
 ## Limitations
 
-- **Team reviewers (`requested_teams`) are not supported**
+- **Team reviewers (`requested_teams`) are not supported** (only individual reviewers)
 - **Posts same content on each run** (no deduplication)
 
 ---

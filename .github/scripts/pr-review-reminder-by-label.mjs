@@ -102,6 +102,18 @@ function stableSort(arr, keyFn) {
   return [...arr].sort((a, b) => String(keyFn(a)).localeCompare(String(keyFn(b))));
 }
 
+function isWipOrDraft(pr) {
+  // Draft PRチェック
+  if (pr.draft === true) return true;
+
+  // タイトルによるWIPチェック（大文字小文字無視）
+  const title = (pr.title || "").toLowerCase();
+  if (title.includes("[wip]")) return true;
+  if (title.startsWith("wip:")) return true;
+
+  return false;
+}
+
 async function main() {
   const prs = await listAllOpenPRs();
 
@@ -109,10 +121,30 @@ async function main() {
   /** @type {Map<string, Map<string, Array<any>>>} */
   const byChannel = new Map();
 
+  // レビュワー未アサインのPR
+  /** @type {Array<any>} */
+  const noReviewerPRs = [];
+
   for (const pr of prs) {
+    // WIP/Draft PRを除外
+    if (isWipOrDraft(pr)) continue;
+
     // requested reviewers（個人）だけ対象
     const reviewers = (pr.requested_reviewers || []).map((u) => u.login).filter(Boolean);
-    if (reviewers.length === 0) continue;
+
+    if (reviewers.length === 0) {
+      // レビュワーなしPRを収集（default_channel_idがある場合のみ）
+      if (labelMap.default_channel_id) {
+        noReviewerPRs.push({
+          number: pr.number,
+          title: pr.title,
+          url: pr.html_url,
+          author: pr.user?.login || "unknown",
+          labels: (pr.labels || []).map((l) => l?.name).filter(Boolean),
+        });
+      }
+      continue;
+    }
 
     const channelId = pickChannelIdFromLabels(pr.labels || []);
     if (!channelId) continue;
@@ -132,8 +164,8 @@ async function main() {
     }
   }
 
-  if (byChannel.size === 0) {
-    console.log("No open PRs with requested reviewers.");
+  if (byChannel.size === 0 && noReviewerPRs.length === 0) {
+    console.log("No open PRs to notify.");
     return;
   }
 
@@ -156,6 +188,24 @@ async function main() {
     const message = lines.join("\n").trim();
     for (const chunk of chunkText(message)) {
       await slackPostMessage(channelId, chunk);
+    }
+  }
+
+  // レビュワー未アサインのPRを通知
+  if (noReviewerPRs.length > 0) {
+    const lines = [];
+    lines.push(`*レビュワー未アサインのPR*  \`${owner}/${repo}\``);
+    lines.push("");
+
+    const sortedPRs = stableSort(noReviewerPRs, (x) => x.number);
+    for (const pr of sortedPRs) {
+      const labelText = pr.labels.length ? ` [${pr.labels.join(", ")}]` : "";
+      lines.push(`• <${pr.url}|#${pr.number} ${pr.title}> (author: ${pr.author})${labelText}`);
+    }
+
+    const message = lines.join("\n").trim();
+    for (const chunk of chunkText(message)) {
+      await slackPostMessage(labelMap.default_channel_id, chunk);
     }
   }
 }

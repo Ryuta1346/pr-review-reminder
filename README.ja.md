@@ -6,8 +6,9 @@ GitHub Actions（schedule）で オープン中のPR を定期チェックし、
 reviewers（レビュワー） を対象に、PRラベルに応じて
 Slackの投稿チャンネルを分岐して通知します。
 
-- **対象PR**: `state=open` のPRのみ
+- **対象PR**: `state=open` のPRのみ（WIP/Draft PRは除外）
 - **対象者**: `requested_reviewers`（個人レビュワー）だけ
+- **レビュワー未アサインPR**: `default_channel_id` に通知
 - **チャンネル分岐**: PRラベル → SlackチャンネルID（ルール表で制御）
 - **実行基盤**: GitHub Actions（cron）
 
@@ -90,6 +91,7 @@ PRラベルに応じてSlackチャンネルを振り分けるルールを定義�
 - PRのラベルが `labels_any` のいずれか1つでも一致 → その `channel_id` に投稿
 - 複数ルールに一致 → 上から順で最初に一致したルールが勝ち
 - 一致なし → `default_channel_id` に投稿
+- レビュワー未アサインのPR → `default_channel_id` に投稿
 
 ### slack_user_map（任意）
 
@@ -162,6 +164,25 @@ GitHubユーザー名をSlackユーザーIDにマッピングします。
 • #456 別のPR (author: yyy) [label3]
 ```
 
+**レビュワー未アサインのPR（default_channel_idに投稿）：**
+
+```
+*レビュワー未アサインのPR*  `owner/repo`
+
+• #789 新機能追加 (author: zzz) [feature]
+• #012 バグ修正 (author: www)
+```
+
+---
+
+## WIP/Draft PRの除外
+
+以下のPRは通知対象から自動的に除外されます：
+
+- **Draft PR**: GitHubのDraft PR機能で作成されたPR
+- **[WIP]**: タイトルに `[WIP]` が含まれるPR（大文字小文字無視）
+- **WIP:**: タイトルが `WIP:` で始まるPR（大文字小文字無視）
+
 ---
 
 ## よくあるトラブルシュート
@@ -180,13 +201,15 @@ Botを対象チャンネルに招待してください：`/invite @Bot`
 
 ### 通知が出ない
 
-`requested_reviewers` が空のPRは対象外です
+- WIP/Draft PRは対象外です
+- `requested_reviewers` が空のPRは `default_channel_id` に通知されます
+- `default_channel_id` が設定されていない場合、レビュワー未アサインPRは通知されません
 
 ---
 
 ## 制約・今後の拡張
 
-- **Team reviewer（requested_teams）は対象外**
+- **Team reviewer（requested_teams）は対象外**（個人レビュワーのみ）
 - **毎回同じ内容を投稿します**（重複抑止機能なし）
 
 ---
