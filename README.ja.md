@@ -2,7 +2,7 @@
 
 [English README](README.md)
 
-GitHub Actions（schedule）で オープン中のPR を定期チェックし、PRの Requested
+GitHub Actions で オープン中のPR を定期チェックし、PRの Requested
 reviewers（レビュワー） を対象に、PRラベルに応じて
 Slackの投稿チャンネルを分岐して通知します。
 
@@ -14,13 +14,11 @@ Slackの投稿チャンネルを分岐して通知します。
 
 ---
 
-## 使用方法（Reusable Workflow）
+## 使用方法
 
-他のリポジトリから呼び出して使用します。
+### クイックスタート
 
-### 1) 呼び出し側リポジトリにワークフローを作成
-
-`.github/workflows/pr-review-reminder.yml` を作成：
+リポジトリに `.github/workflows/pr-review-reminder.yml` を作成：
 
 ```yaml
 name: PR Review Reminder
@@ -28,45 +26,53 @@ name: PR Review Reminder
 on:
   schedule:
     # cronはUTC。例：JST 09:00/13:00/17:00/21:00 に実行したい場合（UTC 00/04/08/12）
-    - cron: "0 0,4,8,12 * * *"
+    - cron: '0 0,4,8,12 * * *'
   workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
 
 jobs:
   remind:
-    uses: ryuta/pr-review-reminder/.github/workflows/reusable-pr-review-reminder.yml@main
-    with:
-      label_channel_map: |
-        {
-          "default_channel_id": "C012DEFAULT",
-          "rules": [
-            { "labels_any": ["frontend", "ui"], "channel_id": "C111FRONT" },
-            { "labels_any": ["backend", "api"], "channel_id": "C222BACK" },
-            { "labels_any": ["infra", "terraform"], "channel_id": "C333INFRA" }
-          ]
-        }
-      slack_user_map: |
-        {
-          "octocat": "U012ABCDEF",
-          "your-github-login": "U034GHIJKL"
-        }
-      dry_run: false
-    secrets:
-      SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send PR review reminders
+        uses: Ryuta1346/pr-review-reminder@v1
+        with:
+          label_channel_map: |
+            {
+              "default_channel_id": "C012DEFAULT",
+              "rules": [
+                { "labels_any": ["frontend", "ui"], "channel_id": "C111FRONT" },
+                { "labels_any": ["backend", "api"], "channel_id": "C222BACK" },
+                { "labels_any": ["infra", "terraform"], "channel_id": "C333INFRA" }
+              ]
+            }
+          slack_user_map: |
+            {
+              "octocat": "U012ABCDEF",
+              "your-github-login": "U034GHIJKL"
+            }
+          slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-### 2) Inputs
+### Inputs
 
 | 名前 | 必須 | 説明 |
 |------|------|------|
 | `label_channel_map` | Yes | JSON: ラベル→Slackチャンネルのマッピング |
 | `slack_user_map` | No | JSON: GitHubユーザー→Slack IDのマッピング（デフォルト: `{}`） |
+| `slack_bot_token` | Yes | Slack Bot OAuth Token (`xoxb-...`) |
 | `dry_run` | No | `true`の場合、Slackに投稿せずログ出力のみ（デフォルト: `false`） |
 
-### 3) Secrets
+### 環境変数
 
 | 名前 | 必須 | 説明 |
 |------|------|------|
-| `SLACK_BOT_TOKEN` | Yes | Slack Bot OAuth Token (`xoxb-...`) |
+| `GITHUB_TOKEN` | Yes | GitHub APIアクセス用トークン（通常は `${{ secrets.GITHUB_TOKEN }}`） |
 
 ---
 
@@ -145,7 +151,7 @@ GitHubユーザー名をSlackユーザーIDにマッピングします。
 
 ### 6) GitHub Secrets を設定
 
-呼び出し側リポジトリで：
+リポジトリで：
 
 1. **Settings** → **Secrets and variables** → **Actions**
 2. `SLACK_BOT_TOKEN` を追加
@@ -204,6 +210,36 @@ Botを対象チャンネルに招待してください：`/invite @Bot`
 - WIP/Draft PRは対象外です
 - `requested_reviewers` が空のPRは `default_channel_id` に通知されます
 - `default_channel_id` が設定されていない場合、レビュワー未アサインPRは通知されません
+
+---
+
+## 開発
+
+### 必要環境
+
+- Node.js 24+
+- pnpm
+
+### セットアップ
+
+```bash
+pnpm install
+```
+
+### コマンド
+
+```bash
+pnpm run build       # dist/index.js をビルド
+pnpm run test        # テスト実行
+pnpm run test:watch  # ウォッチモードでテスト
+pnpm run typecheck   # TypeScript型チェック
+```
+
+### リリース
+
+1. タグを作成: `git tag v1.0.0`
+2. タグをプッシュ: `git push origin v1.0.0`
+3. GitHub Actionsが自動的にリリースを作成し、`v1` タグを更新します
 
 ---
 

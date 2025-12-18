@@ -2,7 +2,7 @@
 
 [日本語版 README](README.ja.md)
 
-A GitHub Actions reusable workflow that periodically checks open PRs and sends review reminders to Slack channels based on PR labels.
+A GitHub Action that periodically checks open PRs and sends review reminders to Slack channels based on PR labels.
 
 - **Target PRs**: Only `state=open` PRs (WIP/Draft PRs excluded)
 - **Target users**: Only `requested_reviewers` (individual reviewers)
@@ -12,13 +12,11 @@ A GitHub Actions reusable workflow that periodically checks open PRs and sends r
 
 ---
 
-## Usage (Reusable Workflow)
+## Usage
 
-Call this workflow from your repository.
+### Quick Start
 
-### 1) Create a workflow in your repository
-
-Create `.github/workflows/pr-review-reminder.yml`:
+Add this workflow to your repository at `.github/workflows/pr-review-reminder.yml`:
 
 ```yaml
 name: PR Review Reminder
@@ -26,45 +24,53 @@ name: PR Review Reminder
 on:
   schedule:
     # Cron is in UTC. For JST 09:00/13:00/17:00/21:00, use UTC 00:00/04:00/08:00/12:00
-    - cron: "0 0,4,8,12 * * *"
+    - cron: '0 0,4,8,12 * * *'
   workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
 
 jobs:
   remind:
-    uses: Ryuta1346/pr-review-reminder/.github/workflows/reusable-pr-review-reminder.yml@main
-    with:
-      label_channel_map: |
-        {
-          "default_channel_id": "C012DEFAULT",
-          "rules": [
-            { "labels_any": ["frontend", "ui"], "channel_id": "C111FRONT" },
-            { "labels_any": ["backend", "api"], "channel_id": "C222BACK" },
-            { "labels_any": ["infra", "terraform"], "channel_id": "C333INFRA" }
-          ]
-        }
-      slack_user_map: |
-        {
-          "octocat": "U012ABCDEF",
-          "your-github-login": "U034GHIJKL"
-        }
-      dry_run: false
-    secrets:
-      SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send PR review reminders
+        uses: Ryuta1346/pr-review-reminder@v1
+        with:
+          label_channel_map: |
+            {
+              "default_channel_id": "C012DEFAULT",
+              "rules": [
+                { "labels_any": ["frontend", "ui"], "channel_id": "C111FRONT" },
+                { "labels_any": ["backend", "api"], "channel_id": "C222BACK" },
+                { "labels_any": ["infra", "terraform"], "channel_id": "C333INFRA" }
+              ]
+            }
+          slack_user_map: |
+            {
+              "octocat": "U012ABCDEF",
+              "your-github-login": "U034GHIJKL"
+            }
+          slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-### 2) Inputs
+### Inputs
 
 | Name | Required | Description |
 |------|----------|-------------|
 | `label_channel_map` | Yes | JSON: Label to Slack channel mapping |
 | `slack_user_map` | No | JSON: GitHub username to Slack user ID mapping (default: `{}`) |
+| `slack_bot_token` | Yes | Slack Bot OAuth Token (`xoxb-...`) |
 | `dry_run` | No | If `true`, only logs without posting to Slack (default: `false`) |
 
-### 3) Secrets
+### Environment Variables
 
 | Name | Required | Description |
 |------|----------|-------------|
-| `SLACK_BOT_TOKEN` | Yes | Slack Bot OAuth Token (`xoxb-...`) |
+| `GITHUB_TOKEN` | Yes | GitHub token for API access (usually `${{ secrets.GITHUB_TOKEN }}`) |
 
 ---
 
@@ -143,7 +149,7 @@ Example: `.../client/TXXXXXXX/C12345678` → `C12345678`
 
 ### 6) Configure GitHub Secrets
 
-In your calling repository:
+In your repository:
 
 1. **Settings** → **Secrets and variables** → **Actions**
 2. Add `SLACK_BOT_TOKEN`
@@ -202,6 +208,36 @@ Check `label_channel_map`:
 - WIP/Draft PRs are excluded
 - PRs without `requested_reviewers` are posted to `default_channel_id`
 - If `default_channel_id` is not set, PRs without reviewers are skipped
+
+---
+
+## Development
+
+### Prerequisites
+
+- Node.js 24+
+- pnpm
+
+### Setup
+
+```bash
+pnpm install
+```
+
+### Commands
+
+```bash
+pnpm run build       # Build dist/index.js
+pnpm run test        # Run tests
+pnpm run test:watch  # Run tests in watch mode
+pnpm run typecheck   # Type check with TypeScript
+```
+
+### Release
+
+1. Create a tag: `git tag v1.0.0`
+2. Push the tag: `git push origin v1.0.0`
+3. GitHub Actions will automatically create a release and update the `v1` tag
 
 ---
 
