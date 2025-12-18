@@ -30,7 +30,7 @@ on:
 
 jobs:
   remind:
-    uses: ryuta/pr-review-reminder/.github/workflows/reusable-pr-review-reminder.yml@main
+    uses: Ryuta1346/pr-review-reminder/.github/workflows/reusable-pr-review-reminder.yml@main
     with:
       label_channel_map: |
         {

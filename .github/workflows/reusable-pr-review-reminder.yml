@@ -33,7 +33,7 @@ jobs:
       - name: Checkout pr-review-reminder
         uses: actions/checkout@v4
         with:
-          repository: ryuta/pr-review-reminder
+          repository: Ryuta1346/pr-review-reminder
           path: _pr-review-reminder
 
       - name: Setup Node.js
