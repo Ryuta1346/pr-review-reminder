@@ -1,0 +1,41 @@
+name: 'PR Review Reminder'
+description: 'Send PR review reminders to Slack based on labels'
+author: 'Ryuta1346'
+
+branding:
+  icon: 'bell'
+  color: 'blue'
+
+inputs:
+  label_channel_map:
+    description: |
+      JSON configuration for mapping PR labels to Slack channels.
+      Example:
+      {
+        "default_channel_id": "C012345678",
+        "rules": [
+          { "labels_any": ["frontend", "ui"], "channel_id": "C_FRONTEND" },
+          { "labels_any": ["backend", "api"], "channel_id": "C_BACKEND" }
+        ]
+      }
+    required: true
+
+  slack_user_map:
+    description: |
+      JSON mapping from GitHub usernames to Slack user IDs.
+      Example: { "octocat": "U012ABCDEF" }
+    required: false
+    default: '{}'
+
+  slack_bot_token:
+    description: 'Slack Bot OAuth Token (xoxb-...)'
+    required: true
+
+  dry_run:
+    description: 'If "true", log messages instead of posting to Slack'
+    required: false
+    default: 'false'
+
+runs:
+  using: 'node24'
+  main: 'dist/index.js'

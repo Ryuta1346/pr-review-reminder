@@ -1,9 +1,12 @@
+# Example workflow for using the PR Review Reminder action
+# Copy this file to your repository and customize as needed.
+
 name: PR review reminder (by label -> Slack channel)
 
 on:
   schedule:
     # cronはUTC。例：JST 09:00/13:00/17:00/21:00 に実行したい場合（UTC 00/04/08/12）
-    - cron: "0 0,4,8,12 * * *"
+    - cron: '0 0,4,8,12 * * *'
   workflow_dispatch:
 
 permissions:
@@ -14,16 +17,12 @@ jobs:
   remind:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Send PR review reminders
+        uses: Ryuta1346/pr-review-reminder@v1
         with:
-          node-version: "20"
-
-      - name: Load configuration and send reminders
+          label_channel_map: ${{ vars.LABEL_CHANNEL_MAP_JSON }}
+          slack_user_map: ${{ vars.SLACK_USER_MAP_JSON }}
+          slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
+          dry_run: ${{ vars.DRY_RUN || 'false' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-          DRY_RUN: ${{ secrets.DRY_RUN }}
-          LABEL_CHANNEL_MAP_JSON: ${{ vars.LABEL_CHANNEL_MAP_JSON }}
-          SLACK_USER_MAP_JSON: ${{ vars.SLACK_USER_MAP_JSON }}
-        run: node .github/scripts/pr-review-reminder-by-label.mjs

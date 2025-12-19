@@ -1,0 +1,42 @@
+name: Build
+
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'package*.json'
+      - 'tsconfig.json'
+      - 'action.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Check dist is up-to-date
+        run: |
+          if [ -n "$(git status dist/ --porcelain)" ]; then
+            echo "::error::dist/ is out of date. Please run 'pnpm run build' and commit the changes."
+            git diff dist/
+            exit 1
+          fi
